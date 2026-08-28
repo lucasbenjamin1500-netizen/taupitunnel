@@ -55,6 +55,23 @@ export function stopAgent(stream) {
   stopMicrophone(stream)
 }
 
+export function isIOS() {
+  const ua = navigator.userAgent || ''
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+}
+
+export function describeVapiError(error) {
+  if (!error) return ''
+  if (typeof error === 'string') return error
+  return (
+    error.error?.message ||
+    error.message ||
+    error.error ||
+    error.type ||
+    ''
+  )
+}
+
 export function isMicDeniedError(error) {
   const text = [
     error?.name,
@@ -66,3 +83,4 @@ export function isMicDeniedError(error) {
     .join(' ')
   return /notallowed|permission|microphone|getusermedia|denied/i.test(text)
 }
+
