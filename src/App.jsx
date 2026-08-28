@@ -25,6 +25,10 @@ export default function App() {
   const vapiAssistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID
   const vapiRef = useRef(null)
 
+  if (!vapiRef.current && vapiKey) {
+    vapiRef.current = new Vapi(vapiKey)
+  }
+
   const [selectedLanguage, setSelectedLanguage] = useState(null)
   const [conversationState, setConversationState] = useState('idle')
   const [isCallActive, setIsCallActive] = useState(false)
@@ -78,7 +82,10 @@ export default function App() {
 
   analyzeRef.current = analyzeConversation
 
-  function attachVapiListeners(vapi) {
+  useEffect(() => {
+    const vapi = vapiRef.current
+    if (!vapi) return
+
     const onCallStart = () => {
       conversationRef.current = []
       sessionIdRef.current = createSessionId()
@@ -118,62 +125,33 @@ export default function App() {
 
     const onError = (error) => {
       console.error('Vapi error', error)
-      const type = String(error?.type || '')
-      const fatal =
-        isMicDeniedError(error) ||
-        /join|start-method|creation|validation|microphone|permission/i.test(type)
-      if (!fatal) return
-
-      stopAgent(previewStreamRef.current)
-      previewStreamRef.current = null
-      setIsCallActive(false)
-      setIsRequestingMic(false)
-      const detail = describeVapiError(error)
-      setMicError(
-        isMicDeniedError(error)
-          ? copyRef.current.micDenied
-          : detail
-            ? `${copyRef.current.startError} (${detail})`
-            : copyRef.current.startError,
-      )
-      setConversationState((current) => (current === 'summary' ? current : 'idle'))
     }
 
     vapi.on('call-start', onCallStart)
-    vapi.on('call-start-success', onCallStart)
     vapi.on('speech-start', onSpeechStart)
     vapi.on('volume-level', onVolumeLevel)
     vapi.on('local-volume-level', onLocalVolumeLevel)
     vapi.on('call-end', onCallEnd)
     vapi.on('message', onMessage)
     vapi.on('error', onError)
-  }
 
-  useEffect(() => {
     return () => {
-      vapiRef.current?.removeAllListeners()
-      vapiRef.current?.stop()
+      vapi.removeListener('call-start', onCallStart)
+      vapi.removeListener('speech-start', onSpeechStart)
+      vapi.removeListener('volume-level', onVolumeLevel)
+      vapi.removeListener('local-volume-level', onLocalVolumeLevel)
+      vapi.removeListener('call-end', onCallEnd)
+      vapi.removeListener('message', onMessage)
+      vapi.removeListener('error', onError)
+      vapi.stop()
       stopAgent(previewStreamRef.current)
     }
   }, [])
 
-  function getVapi() {
-    if (!vapiRef.current) {
-      vapiRef.current = new Vapi(vapiKey, undefined, {
-        alwaysIncludeMicInPermissionPrompt: true,
-      })
-      attachVapiListeners(vapiRef.current)
-    }
-    return vapiRef.current
-  }
-
-  async function startVoiceAgent() {
-    if (!vapiKey || !vapiAssistantId) return Promise.reject(new Error('missing-vapi-config'))
-
-    const vapi = getVapi()
-    await vapi.stop()
-    const assistantOverrides = getAssistantOverrides(selectedLanguage)
-    return vapi.start(vapiAssistantId, assistantOverrides)
+  function startVoiceAgent() {
+    const vapi = vapiRef.current
+    if (!vapi || !vapiAssistantId) return Promise.reject(new Error('missing-vapi-config'))
+    return vapi.start(vapiAssistantId, getAssistantOverrides(selectedLanguage))
   }
 
   function stopVoiceAgent() {
@@ -222,21 +200,22 @@ export default function App() {
     setIsRequestingMic(true)
     await unlockAudio()
 
-    if (isIOS()) {
-      const permission = await startAgent()
-      if (!permission.ok) {
-        setIsRequestingMic(false)
-        const messages = {
-          inapp: copy.micInApp,
-          unsupported: copy.micUnsupported,
-          denied: copy.micDenied,
-        }
-        setMicError(messages[permission.error] ?? copy.micDenied)
-        return
+    const permission = await startAgent()
+    if (!permission.ok) {
+      setIsRequestingMic(false)
+      const messages = {
+        inapp: copy.micInApp,
+        unsupported: copy.micUnsupported,
+        denied: copy.micDenied,
       }
+      setMicError(messages[permission.error] ?? copy.micDenied)
+      return
+    }
+
+    if (isIOS()) {
       previewStreamRef.current = permission.stream
     } else {
-      stopAgent(previewStreamRef.current)
+      stopAgent(permission.stream)
       previewStreamRef.current = null
     }
 

@@ -63,13 +63,19 @@ export function isIOS() {
 export function describeVapiError(error) {
   if (!error) return ''
   if (typeof error === 'string') return error
-  return (
-    error.error?.message ||
-    error.message ||
-    error.error ||
-    error.type ||
-    ''
-  )
+  if (error instanceof Error) return error.message
+
+  const nested = error.error
+  if (typeof nested === 'string') return nested
+  if (nested?.message) return nested.message
+  if (error.message) return error.message
+  if (error.type) return error.type
+
+  try {
+    return JSON.stringify(nested || error)
+  } catch {
+    return ''
+  }
 }
 
 export function isMicDeniedError(error) {
