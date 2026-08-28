@@ -34,20 +34,17 @@ export default function VoiceButton({
   labels,
 }) {
   const isListening = conversationState === 'listening'
-  const isSpeaking = conversationState === 'speaking'
   const isProcessing = conversationState === 'processing'
-  const showStop = isCallActive && !isProcessing && !isSpeaking
-  const isDisabled = disabled || isSpeaking || isProcessing
+  const showStop = isCallActive && !isProcessing
+  const isDisabled = disabled || isProcessing
 
   const text = isProcessing
     ? labels.processing
-    : isSpeaking
-      ? labels.speaking
-      : isConnecting
-        ? labels.connecting
-        : showStop
-          ? labels.stop
-          : labels.start
+    : isConnecting
+      ? labels.connecting
+      : showStop
+        ? labels.stop
+        : labels.start
 
   return (
     <button

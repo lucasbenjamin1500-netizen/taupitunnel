@@ -16,8 +16,8 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr" className="h-full">
-      <body className="h-full">{children}</body>
+    <html lang="fr" className="h-full overflow-hidden">
+      <body className="h-full overflow-hidden overscroll-none">{children}</body>
     </html>
   )
 }

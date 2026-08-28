@@ -61,21 +61,45 @@ export function isIOS() {
 }
 
 export function describeVapiError(error) {
-  if (!error) return ''
-  if (typeof error === 'string') return error
-  if (error instanceof Error) return error.message
+  const seen = new Set()
 
-  const nested = error.error
-  if (typeof nested === 'string') return nested
-  if (nested?.message) return nested.message
-  if (error.message) return error.message
-  if (error.type) return error.type
-
-  try {
-    return JSON.stringify(nested || error)
-  } catch {
-    return ''
+  function unwrap(value) {
+    if (!value || seen.has(value)) return ''
+    if (typeof value === 'string') return value
+    if (typeof value !== 'object') return ''
+    seen.add(value)
+    if (typeof value.message === 'string') return value.message
+    if (typeof value.msg === 'string') return value.msg
+    if (typeof value.errorMsg === 'string') return value.errorMsg
+    if (value instanceof Error) return value.message
+    return unwrap(value.message) || unwrap(value.error)
   }
+
+  return unwrap(error) || (typeof error?.type === 'string' ? error.type : '')
+}
+
+export function isExpectedCallEndError(error) {
+  const nestedType = error?.error?.error?.type || error?.error?.message?.type
+  const text = [
+    error?.type,
+    nestedType,
+    describeVapiError(error),
+    error?.error?.errorMsg,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return /ejected|meeting has ended|meeting-ended|left-meeting/i.test(text)
+}
+
+export function isHostBridgeError(error) {
+  const text = [
+    error?.message,
+    error?.reason?.message,
+    typeof error === 'string' ? error : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return /tabs:outgoing\.message\.ready|no listener/i.test(text)
 }
 
 export function isMicDeniedError(error) {

@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import { NextResponse } from 'next/server'
 import { normalizeFeedback } from '@/src/lib/feedbackReport.js'
+import { saveFeedback } from '@/src/lib/feedbackStore.js'
 
 const SYSTEM_PROMPT = `Tu es un analyste qualité pour Eurotunnel (Le Shuttle).
 À partir du transcript d'un entretien vocal avec un voyageur, tu produis UNE fiche de retour exploitable par les équipes terrain et qualité.
@@ -98,13 +99,13 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid model output' }, { status: 502 })
     }
 
-    return NextResponse.json(
-      normalizeFeedback(parsed, {
-        id,
-        langue,
-        collected_at: new Date().toISOString(),
-      }),
-    )
+    const report = normalizeFeedback(parsed, {
+      id,
+      langue,
+      collected_at: new Date().toISOString(),
+    })
+    await saveFeedback(report)
+    return NextResponse.json(report)
   } catch (error) {
     console.error('analyze error', error)
     return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
