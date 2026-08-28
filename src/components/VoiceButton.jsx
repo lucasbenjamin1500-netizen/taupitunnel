@@ -30,6 +30,7 @@ export default function VoiceButton({
   onClick,
   disabled = false,
   isCallActive = false,
+  isConnecting = false,
   labels,
 }) {
   const isListening = conversationState === 'listening'
@@ -42,9 +43,11 @@ export default function VoiceButton({
     ? labels.processing
     : isSpeaking
       ? labels.speaking
-      : showStop
-        ? labels.stop
-        : labels.start
+      : isConnecting
+        ? labels.connecting
+        : showStop
+          ? labels.stop
+          : labels.start
 
   return (
     <button

@@ -4,6 +4,7 @@ export const COPY = {
     stop: 'Arrêter',
     speaking: 'L’agent parle…',
     processing: 'Traitement…',
+    connecting: 'Connexion…',
     hints: {
       idle: 'Laissez-vous guider par notre agent',
       listening: 'Parlez naturellement, nous vous écoutons',
@@ -51,6 +52,8 @@ export const COPY = {
       'Ouvrez cette page dans Safari (iPhone) ou Chrome (Android), pas dans Instagram, LinkedIn ou Messenger.',
     micUnsupported:
       'Ce navigateur ne permet pas d’utiliser le micro. Ouvrez le site dans Safari ou Chrome.',
+    startError:
+      'Impossible de lancer l’appel. Réessayez, micro autorisé.',
     vapiMissing:
       'Vapi n’est pas configuré. Ajoutez NEXT_PUBLIC_VAPI_KEY et NEXT_PUBLIC_VAPI_ASSISTANT_ID dans le fichier .env.',
     sr: {
@@ -66,6 +69,7 @@ export const COPY = {
     stop: 'Stop',
     speaking: 'The agent is speaking…',
     processing: 'Processing…',
+    connecting: 'Connecting…',
     hints: {
       idle: 'Let our agent guide you',
       listening: 'Speak naturally, we are listening',
@@ -112,6 +116,8 @@ export const COPY = {
       'Open this page in Safari (iPhone) or Chrome (Android), not in Instagram, LinkedIn or Messenger.',
     micUnsupported:
       'This browser cannot use the microphone. Open the site in Safari or Chrome.',
+    startError:
+      'Could not start the call. Try again with the microphone allowed.',
     vapiMissing:
       'Vapi is not configured. Add NEXT_PUBLIC_VAPI_KEY and NEXT_PUBLIC_VAPI_ASSISTANT_ID to your .env file.',
     sr: {
