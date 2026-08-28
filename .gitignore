@@ -1,0 +1,12 @@
+node_modules
+dist
+.next
+.DS_Store
+*.local
+.env
+.env.*
+!.env.example
+vite.config.js
+index.html
+src/main.jsx
+src/index.css

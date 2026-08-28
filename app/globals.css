@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-speak-glow: speak-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes speak-glow {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #0a1224;
+  color: #f4f1ea;
+  overscroll-behavior: none;
+}
+
+button {
+  font: inherit;
+}
