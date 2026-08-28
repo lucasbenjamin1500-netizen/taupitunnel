@@ -15,7 +15,7 @@ import {
 } from './lib/feedbackReport.js'
 import { formatTranscript, ingestVapiMessage } from './lib/transcript.js'
 import { getAssistantOverrides } from './lib/vapiConfig.js'
-import { startAgent, stopAgent } from './lib/voiceAgent.js'
+import { startAgent, stopAgent, unlockAudio, isMicDeniedError } from './lib/voiceAgent.js'
 
 const screenTransition =
   'absolute inset-0 flex flex-col transition-all duration-500 ease-out motion-reduce:transition-none'
@@ -39,8 +39,11 @@ export default function App() {
   const conversationRef = useRef([])
   const analyzeRef = useRef(null)
   const sessionIdRef = useRef(createSessionId())
+  const previewStreamRef = useRef(null)
+  const copyRef = useRef(COPY.fr)
 
   const copy = COPY[selectedLanguage] ?? COPY.fr
+  copyRef.current = copy
   const showAgent = Boolean(selectedLanguage)
   const showSummary = conversationState === 'summary'
 
@@ -84,6 +87,8 @@ export default function App() {
     if (!vapi) return
 
     const onCallStart = () => {
+      stopAgent(previewStreamRef.current)
+      previewStreamRef.current = null
       conversationRef.current = []
       sessionIdRef.current = createSessionId()
       setFeedback(null)
@@ -111,6 +116,8 @@ export default function App() {
     }
 
     const onCallEnd = () => {
+      stopAgent(previewStreamRef.current)
+      previewStreamRef.current = null
       setIsCallActive(false)
       setConversationState('processing')
       if (analyzeRef.current) analyzeRef.current(conversationRef.current)
@@ -118,8 +125,13 @@ export default function App() {
 
     const onMessage = (message) => handleAgentMessage(message)
 
-    const onError = () => {
+    const onError = (error) => {
+      stopAgent(previewStreamRef.current)
+      previewStreamRef.current = null
       setIsCallActive(false)
+      if (isMicDeniedError(error)) {
+        setMicError(copyRef.current.micDenied)
+      }
       setConversationState((current) => (current === 'summary' ? current : 'idle'))
     }
 
@@ -195,20 +207,31 @@ export default function App() {
 
     setMicError(null)
     setIsRequestingMic(true)
-    const permission = await startAgent()
-    stopAgent(permission.stream)
-    setIsRequestingMic(false)
 
+    const permission = await startAgent()
     if (!permission.ok) {
-      setMicError(copy.micDenied)
+      setIsRequestingMic(false)
+      const messages = {
+        inapp: copy.micInApp,
+        unsupported: copy.micUnsupported,
+        denied: copy.micDenied,
+      }
+      setMicError(messages[permission.error] ?? copy.micDenied)
       return
     }
 
+    previewStreamRef.current = permission.stream
+    await unlockAudio()
+
     try {
       await startVoiceAgent()
-    } catch {
-      setMicError(copy.vapiMissing)
+    } catch (error) {
+      stopAgent(previewStreamRef.current)
+      previewStreamRef.current = null
+      setMicError(isMicDeniedError(error) ? copy.micDenied : copy.micUnsupported)
       setConversationState('idle')
+    } finally {
+      setIsRequestingMic(false)
     }
   }
 

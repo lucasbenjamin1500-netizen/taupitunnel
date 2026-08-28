@@ -47,6 +47,10 @@ export const COPY = {
     },
     micDenied:
       'Pour discuter avec Taupitunnel, nous avons besoin de l’accès à votre micro.',
+    micInApp:
+      'Ouvrez cette page dans Safari (iPhone) ou Chrome (Android), pas dans Instagram, LinkedIn ou Messenger.',
+    micUnsupported:
+      'Ce navigateur ne permet pas d’utiliser le micro. Ouvrez le site dans Safari ou Chrome.',
     vapiMissing:
       'Vapi n’est pas configuré. Ajoutez NEXT_PUBLIC_VAPI_KEY et NEXT_PUBLIC_VAPI_ASSISTANT_ID dans le fichier .env.',
     sr: {
@@ -104,6 +108,10 @@ export const COPY = {
     },
     micDenied:
       'To talk with Taupitunnel, we need access to your microphone.',
+    micInApp:
+      'Open this page in Safari (iPhone) or Chrome (Android), not in Instagram, LinkedIn or Messenger.',
+    micUnsupported:
+      'This browser cannot use the microphone. Open the site in Safari or Chrome.',
     vapiMissing:
       'Vapi is not configured. Add NEXT_PUBLIC_VAPI_KEY and NEXT_PUBLIC_VAPI_ASSISTANT_ID to your .env file.',
     sr: {

@@ -3,9 +3,30 @@
  * (Vapi, OpenAI Realtime, Retell, etc.).
  */
 
+export function isInAppBrowser() {
+  const ua = navigator.userAgent || ''
+  return /FBAN|FBAV|Instagram|LinkedInApp|Line\/|Twitter|Snapchat|WhatsApp|Messenger/i.test(ua)
+}
+
+export async function unlockAudio() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    if (!AudioCtx) return
+    const context = new AudioCtx()
+    if (context.state === 'suspended') await context.resume()
+    const buffer = context.createBuffer(1, 1, 22050)
+    const source = context.createBufferSource()
+    source.buffer = buffer
+    source.connect(context.destination)
+    source.start(0)
+  } catch {
+    /* iOS peut ignorer ; le micro reste le point critique */
+  }
+}
+
 export async function requestMicrophone() {
   if (!navigator.mediaDevices?.getUserMedia) {
-    return { ok: false, error: 'unsupported' }
+    return { ok: false, error: isInAppBrowser() ? 'inapp' : 'unsupported' }
   }
 
   try {
@@ -14,7 +35,9 @@ export async function requestMicrophone() {
   } catch (err) {
     const denied =
       err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError'
-    return { ok: false, error: denied ? 'denied' : 'unavailable' }
+    if (denied) return { ok: false, error: 'denied' }
+    if (isInAppBrowser()) return { ok: false, error: 'inapp' }
+    return { ok: false, error: 'unavailable' }
   }
 }
 
@@ -25,10 +48,21 @@ export function stopMicrophone(stream) {
 export async function startAgent() {
   const permission = await requestMicrophone()
   if (!permission.ok) return permission
-  // Point d'injection SDK : startCall(stream)
   return permission
 }
 
 export function stopAgent(stream) {
   stopMicrophone(stream)
+}
+
+export function isMicDeniedError(error) {
+  const text = [
+    error?.name,
+    error?.message,
+    error?.error?.message,
+    error?.errorMsg,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return /notallowed|permission|microphone|getusermedia|denied/i.test(text)
 }
